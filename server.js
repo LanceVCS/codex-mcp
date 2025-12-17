@@ -141,9 +141,12 @@ function runCodexStart(args) {
     // Build CLI command
     const cliArgs = ['exec', args.prompt];
 
-    if (args.sandbox) {
-      cliArgs.push('--sandbox', args.sandbox);
-    }
+    // Default to read-only sandbox for security - prevents file edits unless explicitly allowed
+    const sandbox = args.sandbox || 'read-only';
+    cliArgs.push('--sandbox', sandbox);
+
+    // Restrict Playwright tools to safe subset (blocks browser_run_code, browser_evaluate, browser_file_upload)
+    cliArgs.push('-c', 'mcp_servers.playwright.enabled_tools=["browser_navigate","browser_click","browser_type","browser_press_key","browser_take_screenshot","browser_snapshot","browser_wait_for","browser_fill_form","browser_select_option","browser_hover","browser_handle_dialog"]');
     if (args.model) {
       cliArgs.push('-m', args.model);
     }
@@ -234,8 +237,12 @@ function runCodexStart(args) {
 function runCodexResume(sessionId, prompt) {
   return new Promise((resolve, reject) => {
     // Use CLI resume command
+    // Note: exec resume doesn't support --sandbox flag, use -c config override instead
+    // Options must come BEFORE positional arguments per CLI usage
     const proc = spawn('codex', [
-      'exec', 'resume', sessionId, prompt
+      'exec', 'resume',
+      '-c', 'mcp_servers.playwright.enabled_tools=["browser_navigate","browser_click","browser_type","browser_press_key","browser_take_screenshot","browser_snapshot","browser_wait_for","browser_fill_form","browser_select_option","browser_hover","browser_handle_dialog"]',
+      sessionId, prompt
     ], {
       env: process.env
     });
