@@ -163,6 +163,9 @@ function runCodexStart(args) {
       cwd: args.cwd || process.cwd()
     });
 
+    // Close stdin immediately so codex doesn't hang waiting for additional input
+    proc.stdin.end();
+
     let output = '';
     let jsonLines = [];
     let sessionId = null;
@@ -246,6 +249,9 @@ function runCodexResume(sessionId, prompt) {
     ], {
       env: process.env
     });
+
+    // Close stdin immediately so codex doesn't hang waiting for additional input
+    proc.stdin.end();
 
     let output = '';
 
