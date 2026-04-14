@@ -24,6 +24,8 @@ const sessions = new Map();
 rl.on('line', async (line) => {
   try {
     const message = JSON.parse(line);
+    // JSON-RPC notifications have no id and must never receive a response.
+    const isNotification = message.id === undefined || message.id === null;
 
     // Route different MCP methods
     switch (message.method) {
@@ -31,8 +33,9 @@ rl.on('line', async (line) => {
         handleInitialize(message);
         break;
 
+      case 'notifications/initialized':
       case 'initialized':
-        // Client confirming initialization
+        // Client confirming initialization — notification, no response.
         break;
 
       case 'tools/list':
@@ -44,7 +47,9 @@ rl.on('line', async (line) => {
         break;
 
       default:
-        sendError(message.id, -32601, 'Method not found');
+        if (!isNotification) {
+          sendError(message.id, -32601, 'Method not found');
+        }
     }
   } catch (e) {
     console.error('Error processing message:', e);
